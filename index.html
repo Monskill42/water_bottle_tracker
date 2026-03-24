@@ -14,15 +14,16 @@ body{
 }
 .container{
     width:100%;
-    padding:12px;
+    padding:10px;
+    font-size:14px;
 }
 
 input, button{
-    padding:12px;
-    margin:6px;
+    padding:10px;
+    margin:5px;
     width:92%;
     max-width:320px;
-    font-size:15px;
+    font-size:14px;
     border-radius:12px;
     border:none;
 }
@@ -88,7 +89,7 @@ h2{
 </head>
 <body>
 
-<h2>. Water Tracker</h2>
+<h2> Water Tracker</h2>
 
 <div class="container">
 
@@ -114,6 +115,8 @@ h2{
 </div>
 
 <h2 id="result"></h2>
+
+<div style="position:fixed; bottom:10px; left:0; width:100%; text-align:center; color:#94a3b8; font-size:13px;">❤️ love from pratiyogesh</div>
 
 <div class="table-wrapper">
 <table>
@@ -236,7 +239,7 @@ function customerBill(){
 
     customers.forEach(c=>{
         let count = c.days.reduce((a,b)=>a+b,0);
-        text += c.name + " : = " + (count * price) + "\n";
+        text += c.name + " :  = " + (count * price) + "\n";
     });
 
     alert(text);
