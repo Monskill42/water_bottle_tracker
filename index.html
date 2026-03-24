@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Water Tracker</title>
+
+<!-- PWA Setup -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f172a">
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background:#0f172a;
+    color:white;
+    text-align:center;
+    margin:0;
+}
+.container{
+    width:100%;
+    padding:10px;
+}
+input, button{
+    padding:12px;
+    margin:6px;
+    width:90%;
+    max-width:300px;
+    font-size:16px;
+}
+button{
+    background:#22c55e;
+    border:none;
+    color:white;
+    cursor:pointer;
+    border-radius:6px;
+}
+.table-wrapper{
+    overflow-x:auto;
+}
+table{
+    min-width:800px;
+    border-collapse:collapse;
+    margin-top:20px;
+}
+th, td{
+    border:1px solid white;
+    padding:4px;
+    font-size:10px;
+    text-align:center;
+}
+.day-box{
+    width:14px;
+    height:14px;
+}
+.header-day{
+    font-size:9px;
+    color:#94a3b8;
+}
+
+.install-btn{
+    background:#3b82f6;
+}
+</style>
+</head>
+<body>
+
+<h2>Water Tracker</h2>
+
+<div class="container">
+
+<input type="text" id="name" placeholder="Customer Name">
+<button onclick="addCustomer()">Add Customer</button>
+
+<br>
+
+<input type="month" id="monthPicker">
+
+<br>
+
+<input type="number" id="price" placeholder="Price per Bottle">
+<button onclick="calculateAll()">Total Profit</button>
+<button onclick="customerBill()">Customer Bills</button>
+<button onclick="downloadExcel()">Download Excel</button>
+<button onclick="printBills()">Print Bills</button>
+
+<!-- Install Button -->
+<button class="install-btn" id="installBtn" style="display:none">📲 Install App</button>
+
+<h2 id="result"></h2>
+
+<div class="table-wrapper">
+<table>
+<thead>
+<tr id="headerRow">
+<th>Name</th>
+</tr>
+</thead>
+<tbody id="tableBody"></tbody>
+</table>
+</div>
+
+</div>
+
+<script>
+let customers = JSON.parse(localStorage.getItem('customers')) || [];
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    document.getElementById('installBtn').style.display = 'block';
+});
+
+document.getElementById('installBtn').addEventListener('click', async () => {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt = null;
+    }
+});
+
+function save(){
+    localStorage.setItem('customers', JSON.stringify(customers));
+}
+
+function getDaysInMonth(year, month){
+    return new Date(year, month + 1, 0).getDate();
+}
+
+function createHeader(){
+    let header = document.getElementById('headerRow');
+    header.innerHTML = '<th>Name</th>';
+
+    let selected = document.getElementById('monthPicker').value;
+    let dateObj = selected ? new Date(selected) : new Date();
+
+    let year = dateObj.getFullYear();
+    let month = dateObj.getMonth();
+
+    let days = getDaysInMonth(year, month);
+
+    for(let i=1;i<=days;i++){
+        let date = new Date(year, month, i);
+        let dayText = date.toLocaleDateString('en-IN', {day:'numeric', month:'short'});
+        header.innerHTML += `<th><div>${i}</div><div class="header-day">${dayText}</div></th>`;
+    }
+
+    header.innerHTML += '<th>Total</th><th>Del</th>';
+}
+
+function addCustomer(){
+    let name = document.getElementById('name').value;
+    if(name === ''){
+        alert('Enter name');
+        return;
+    }
+
+    let selected = document.getElementById('monthPicker').value;
+    let dateObj = selected ? new Date(selected) : new Date();
+    let days = getDaysInMonth(dateObj.getFullYear(), dateObj.getMonth());
+
+    let arr = new Array(days).fill(0);
+
+    customers.push({name, days: arr});
+    save();
+    display();
+}
+
+function toggleDay(cIndex, dIndex, checkbox){
+    if(checkbox.checked){
+        let qty = prompt("How many bottles?", "1");
+        qty = parseInt(qty);
+        if(!qty || qty < 1) qty = 1;
+        customers[cIndex].days[dIndex] = qty;
+    } else {
+        customers[cIndex].days[dIndex] = 0;
+    }
+    save();
+    display();
+}
+
+function deleteCustomer(index){
+    customers.splice(index,1);
+    save();
+    display();
+}
+
+function display(){
+    createHeader();
+
+    let table = document.getElementById('tableBody');
+    table.innerHTML = '';
+
+    customers.forEach((cust, cIndex)=>{
+        let total = 0;
+        let row = `<tr><td>${cust.name}</td>`;
+
+        cust.days.forEach((day, dIndex)=>{
+            total += day;
+            row += `<td style="background:${day>0 ? '#16a34a' : 'transparent'}">
+            <input type="checkbox" class="day-box" ${day>0 ? 'checked' : ''}
+            onchange="toggleDay(${cIndex},${dIndex}, this)">
+            ${day>1 ? `<div style='font-size:8px'>${day}</div>` : ''}
+            </td>`;
+        });
+
+        row += `<td>${total}</td>`;
+        row += `<td><button onclick="deleteCustomer(${cIndex})">X</button></td></tr>`;
+
+        table.innerHTML += row;
+    });
+}
+
+function calculateAll(){
+    let price = document.getElementById('price').value;
+    let totalBottle = 0;
+
+    customers.forEach(c=>{
+        c.days.forEach(d=>{ totalBottle += d; });
+    });
+
+    document.getElementById('result').innerText = "Total Profit: = " + (totalBottle * price);
+}
+
+function customerBill(){
+    let price = document.getElementById('price').value;
+    let text = "Customer Bills:\n";
+
+    customers.forEach(c=>{
+        let count = c.days.reduce((a,b)=>a+b,0);
+        text += c.name + " : = " + (count * price) + "\n";
+    });
+
+    alert(text);
+}
+
+function downloadExcel(){
+    let price = document.getElementById('price').value;
+    let csv = "Name,";
+
+    let selected = document.getElementById('monthPicker').value;
+    let dateObj = selected ? new Date(selected) : new Date();
+    let days = getDaysInMonth(dateObj.getFullYear(), dateObj.getMonth());
+
+    for(let i=1;i<=days;i++) csv += "Day "+i+",";
+    csv += "Total Bottles,Total Price\n";
+
+    customers.forEach(c=>{
+        let total = 0;
+        csv += c.name + ",";
+
+        c.days.forEach(d=>{
+            csv += d + ",";
+            total += d;
+        });
+
+        csv += total + "," + (total * price) + "\n";
+    });
+
+    let blob = new Blob([csv], { type: 'text/csv' });
+    let url = window.URL.createObjectURL(blob);
+    let a = document.createElement('a');
+    a.href = url;
+    a.download = 'water_data.csv';
+    a.click();
+}
+
+function printBills(){
+    let price = document.getElementById('price').value;
+    let content = '<h2>Customer Bills</h2>';
+
+    customers.forEach(c=>{
+        let count = c.days.reduce((a,b)=>a+b,0);
+        content += `<p>${c.name} : ₹${count * price}</p>`;
+    });
+
+    let win = window.open('', '', 'width=600,height=600');
+    win.document.write(content);
+    win.print();
+}
+
+// remove login system completely
+
+display();
+</script>
+
+</body>
+</html>
