@@ -4,93 +4,114 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Water Tracker</title>
 
-<!-- PWA Setup -->
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0f172a">
-
 <style>
 body{
     font-family: Arial, sans-serif;
-    background:#0f172a;
+    background: linear-gradient(135deg,#0f172a,#1e293b);
     color:white;
     text-align:center;
     margin:0;
 }
 .container{
     width:100%;
-    padding:10px;
+    padding:12px;
 }
+
 input, button{
     padding:12px;
     margin:6px;
-    width:90%;
-    max-width:300px;
-    font-size:16px;
-}
-button{
-    background:#22c55e;
+    width:92%;
+    max-width:320px;
+    font-size:15px;
+    border-radius:12px;
     border:none;
+}
+
+input{
+    background:#e2e8f0;
+    color:black;
+}
+
+button{
+    background: linear-gradient(135deg,#22c55e,#16a34a);
     color:white;
     cursor:pointer;
-    border-radius:6px;
 }
+
+button:hover{
+    opacity:0.9;
+}
+
 .table-wrapper{
     overflow-x:auto;
+    margin-top:10px;
 }
+
 table{
     min-width:800px;
     border-collapse:collapse;
-    margin-top:20px;
+    margin-top:10px;
+    background:#020617;
+    border-radius:10px;
+    overflow:hidden;
 }
+
 th, td{
-    border:1px solid white;
-    padding:4px;
+    border:1px solid #334155;
+    padding:5px;
     font-size:10px;
     text-align:center;
 }
+
 .day-box{
     width:14px;
     height:14px;
 }
+
 .header-day{
     font-size:9px;
     color:#94a3b8;
 }
 
-.install-btn{
-    background:#3b82f6;
+h2{
+    margin-top:10px;
 }
+
+.section{
+    background:#1e293b;
+    padding:10px;
+    border-radius:14px;
+    margin-bottom:10px;
+}
+
 </style>
 </head>
 <body>
 
-<h2> Water Tracker</h2>
+<h2>. Water Tracker</h2>
 
 <div class="container">
 
+<div class="section">
 <input type="text" id="name" placeholder="Customer Name">
 <button onclick="addCustomer()">Add Customer</button>
+</div>
 
-<br>
-
+<div class="section">
 <input type="month" id="monthPicker">
-
-<br>
-
 <input type="number" id="price" placeholder="Price per Bottle">
+
 <button onclick="calculateAll()">Total Profit</button>
 <button onclick="customerBill()">Customer Bills</button>
 <button onclick="downloadExcel()">Download Excel</button>
 <button onclick="printBills()">Print Bills</button>
+</div>
 
-<!-- Search Section -->
-<br><br>
+<div class="section">
 <input type="text" id="searchName" placeholder="Search Customer (A-Z)">
 <button onclick="searchCustomer()">Search</button>
 <button onclick="resetSearch()">Show All</button>
-
-<!-- Install Button -->
-<button class="install-btn" id="installBtn" style="display:none">📲 Install App</button>
+</div>
 
 <h2 id="result"></h2>
 
@@ -109,20 +130,6 @@ th, td{
 
 <script>
 let customers = JSON.parse(localStorage.getItem('customers')) || [];
-let deferredPrompt;
-
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    document.getElementById('installBtn').style.display = 'block';
-});
-
-document.getElementById('installBtn').addEventListener('click', async () => {
-    if (deferredPrompt) {
-        deferredPrompt.prompt();
-        deferredPrompt = null;
-    }
-});
 
 function save(){
     localStorage.setItem('customers', JSON.stringify(customers));
