@@ -64,7 +64,7 @@ th, td{
 </head>
 <body>
 
-<h2>Water Tracker</h2>
+<h2> Water Tracker</h2>
 
 <div class="container">
 
@@ -82,6 +82,12 @@ th, td{
 <button onclick="customerBill()">Customer Bills</button>
 <button onclick="downloadExcel()">Download Excel</button>
 <button onclick="printBills()">Print Bills</button>
+
+<!-- Search Section -->
+<br><br>
+<input type="text" id="searchName" placeholder="Search Customer (A-Z)">
+<button onclick="searchCustomer()">Search</button>
+<button onclick="resetSearch()">Show All</button>
 
 <!-- Install Button -->
 <button class="install-btn" id="installBtn" style="display:none">📲 Install App</button>
@@ -149,26 +155,20 @@ function createHeader(){
 
 function addCustomer(){
     let name = document.getElementById('name').value;
-    if(name === ''){
-        alert('Enter name');
-        return;
-    }
+    if(name === '') return alert('Enter name');
 
     let selected = document.getElementById('monthPicker').value;
     let dateObj = selected ? new Date(selected) : new Date();
     let days = getDaysInMonth(dateObj.getFullYear(), dateObj.getMonth());
 
-    let arr = new Array(days).fill(0);
-
-    customers.push({name, days: arr});
+    customers.push({name, days: new Array(days).fill(0)});
     save();
     display();
 }
 
 function toggleDay(cIndex, dIndex, checkbox){
     if(checkbox.checked){
-        let qty = prompt("How many bottles?", "1");
-        qty = parseInt(qty);
+        let qty = parseInt(prompt("How many bottles?", "1"));
         if(!qty || qty < 1) qty = 1;
         customers[cIndex].days[dIndex] = qty;
     } else {
@@ -184,45 +184,47 @@ function deleteCustomer(index){
     display();
 }
 
-function display(){
+function display(filteredList = customers){
     createHeader();
 
     let table = document.getElementById('tableBody');
     table.innerHTML = '';
 
-    customers.forEach((cust, cIndex)=>{
+    filteredList.forEach(cust => {
         let total = 0;
+        let realIndex = customers.indexOf(cust);
+
         let row = `<tr><td>${cust.name}</td>`;
 
         cust.days.forEach((day, dIndex)=>{
             total += day;
             row += `<td style="background:${day>0 ? '#16a34a' : 'transparent'}">
             <input type="checkbox" class="day-box" ${day>0 ? 'checked' : ''}
-            onchange="toggleDay(${cIndex},${dIndex}, this)">
+            onchange="toggleDay(${realIndex},${dIndex}, this)">
             ${day>1 ? `<div style='font-size:8px'>${day}</div>` : ''}
             </td>`;
         });
 
         row += `<td>${total}</td>`;
-        row += `<td><button onclick="deleteCustomer(${cIndex})">X</button></td></tr>`;
+        row += `<td><button onclick="deleteCustomer(${realIndex})">X</button></td></tr>`;
 
         table.innerHTML += row;
     });
 }
 
 function calculateAll(){
-    let price = document.getElementById('price').value;
+    let price = document.getElementById('price').value || 0;
     let totalBottle = 0;
 
     customers.forEach(c=>{
-        c.days.forEach(d=>{ totalBottle += d; });
+        c.days.forEach(d=> totalBottle += d);
     });
 
     document.getElementById('result').innerText = "Total Profit: = " + (totalBottle * price);
 }
 
 function customerBill(){
-    let price = document.getElementById('price').value;
+    let price = document.getElementById('price').value || 0;
     let text = "Customer Bills:\n";
 
     customers.forEach(c=>{
@@ -234,7 +236,7 @@ function customerBill(){
 }
 
 function downloadExcel(){
-    let price = document.getElementById('price').value;
+    let price = document.getElementById('price').value || 0;
     let csv = "Name,";
 
     let selected = document.getElementById('monthPicker').value;
@@ -265,12 +267,12 @@ function downloadExcel(){
 }
 
 function printBills(){
-    let price = document.getElementById('price').value;
+    let price = document.getElementById('price').value || 0;
     let content = '<h2>Customer Bills</h2>';
 
     customers.forEach(c=>{
         let count = c.days.reduce((a,b)=>a+b,0);
-        content += `<p>${c.name} : ₹${count * price}</p>`;
+        content += `<p>${c.name} : = ${count * price}</p>`;
     });
 
     let win = window.open('', '', 'width=600,height=600');
@@ -278,7 +280,16 @@ function printBills(){
     win.print();
 }
 
-// remove login system completely
+function searchCustomer(){
+    let text = document.getElementById('searchName').value.toLowerCase();
+    let filtered = customers.filter(c => c.name.toLowerCase().startsWith(text));
+    display(filtered);
+}
+
+function resetSearch(){
+    document.getElementById('searchName').value = '';
+    display();
+}
 
 display();
 </script>
